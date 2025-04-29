@@ -1,0 +1,324 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Sound Systems</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.9/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            border: 1px solid #444;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function Header() {
+            return (
+                <header className="bg-gray-800 text-white py-6">
+                    <div className="container mx-auto px-4">
+                        <h1 className="text-3xl font-bold">Interactive Sound Systems</h1>
+                        <p className="mt-2">Exploring dynamic soundscapes through data and interactivity</p>
+                    </div>
+                </header>
+            );
+        }
+
+        function ReflectionSection({ title, content }) {
+            return (
+                <div className="mt-8 bg-gray-800 p-6 rounded-lg">
+                    <h2 className="text-2xl font-bold mb-4">{title}</h2>
+                    <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content }}></div>
+                </div>
+            );
+        }
+
+        function App() {
+            const reflectionHealth = `
+<h3>a. Dataset Used</h3>
+<p>The dataset utilized is a preprocessed health and fitness dataset stored in <code>dataset_with_updated_changes.csv</code>. It contains a wide range of metrics including:</p>
+<ul>
+    <li><strong>Workout metrics</strong>: <code>Workout Duration (mins)</code>, <code>Calories Burned</code>, <code>Heart Rate (bpm)</code>, <code>Steps Taken</code>, <code>Distance (km)</code>, <code>Workout Intensity</code>.</li>
+    <li><strong>Sleep metrics</strong>: <code>Sleep Hours</code>, <code>Sleep_Quality</code>, <code>Sleep_Duration</code>, <code>Deep_Sleep_Duration</code>, <code>REM_Sleep_Duration</code>, <code>Wakeups</code>, <code>Snoring</code>.</li>
+    <li><strong>Physiological metrics</strong>: <code>Resting Heart Rate (bpm)</code>, <code>Blood_Oxygen_Level</code>, <code>ECG</code>, <code>Skin_Temperature</code>, <code>Body_Fat_Percentage</code>, <code>Muscle_Mass</code>.</li>
+    <li><strong>Behavioral and environmental metrics</strong>: <code>Water Intake (liters)</code>, <code>Daily Calories Intake</code>, <code>Stress_Level</code>, <code>Mood</code>, <code>Noise_Exposure</code>, <code>Social_Interaction</code>, <code>Work_Hours</code>, <code>Exercise_Hours</code>, <code>Caffeine_Intake</code>, <code>Multitasking_Habit</code>, <code>Anxiety_Score</code>, <code>Depression_Score</code>, <code>Sensory_Sensitivity</code>, <code>Meditation_Habit</code>, <code>Overthinking_Score</code>, <code>Irritability_Score</code>, <code>Headache_Frequency</code>, <code>Tech_Usage_Hours</code>, <code>Overstimulated</code>.</li>
+    <li><strong>Temporal features</strong>: <code>Year</code>, <code>Month</code>, <code>Day</code>, and one-hot encoded columns for <code>Workout Type</code>, <code>Mood Before Workout</code>, <code>Mood After Workout</code>, and <code>Day_of_Week</code>.</li>
+    <li><strong>Change metrics</strong>: <code>Delta_</code> and <code>PctChange_</code> for key features like <code>Workout Duration (mins)</code>, <code>Calories Burned</code>, <code>Heart Rate (bpm)</code>, <code>Stress_Level</code>, <code>Sleep_Quality</code>, and <code>Sleep Hours</code>.</li>
+</ul>
+<p>The dataset spans from 2016 to 2025, with over 3000 rows, and includes a <code>Cluster</code> column, likely from K-Means clustering, to identify patterns or groups in the data. The change metrics track day-to-day variations, making it ideal for dynamic, time-based auditory representations.</p>
+
+<h3>b. Design Choices and Rationale</h3>
+<p>The goal was to create a dynamic, evolving soundscape in SuperCollider that responds to the health and fitness data stream via OSC. Key design choices include:</p>
+<ol>
+    <li><strong>Multi-Layered Synthesis Structure</strong><br>
+        <strong>Rationale</strong>: To reflect the dataset’s complexity with a rich, textured soundscape. Each layer (pitch, filter, amplitude, spatialization) is controlled by different data dimensions.<br>
+        <strong>Implementation</strong>: A <code>SynthDef</code> with detuned oscillators, resonant filter, amplitude envelope, and stereo panning, driven by OSC messages.
+    </li>
+    <li><strong>Chaotic Oscillators and Stochastic Processes</strong><br>
+        <strong>Rationale</strong>: To ensure continuous evolution, mirroring the variability in health metrics, even with static data.<br>
+        <strong>Implementation</strong>: A Henon map modulates pitch and panning, while stochastic processes (e.g., <code>LFNoise1</code>) affect filter resonance and amplitude.
+    </li>
+    <li><strong>Event-Driven Synthesis</strong><br>
+        <strong>Rationale</strong>: To highlight significant data changes (e.g., spikes in stress), simulating responsiveness to health events.<br>
+        <strong>Implementation</strong>: A percussive <code>SynthDef</code> triggered by OSC value changes exceeding a threshold (e.g., 0.2), shaped by current data.
+    </li>
+    <li><strong>Interdependences and Feedback Loops</strong><br>
+        <strong>Rationale</strong>: To model interconnections between health metrics (e.g., stress impacting sleep).<br>
+        <strong>Implementation</strong>: Shared chaos across synths, event frequency reducing drone amplitude, and amplitude feedback adjusting trigger thresholds.
+    </li>
+    <li><strong>Temporal Evolution</strong><br>
+        <strong>Rationale</strong>: To incorporate historical data influence, reflecting how past health affects the present.<br>
+        <strong>Implementation</strong>: A moving average of past OSC values influences drone frequency and amplitude.
+    </li>
+</ol>
+
+<h3>c. Unexpected Results and How They Influenced the Outcome</h3>
+<p>Several unexpected issues arose during implementation, leading to refinements:</p>
+<ol>
+    <li><strong>Overly Chaotic Modulation</strong><br>
+        <strong>Issue</strong>: Excessive pitch variation from the Henon map caused dissonance.<br>
+        <strong>Solution</strong>: Reduced modulation depth and added vibrato, balancing chaos with musicality.
+    </li>
+    <li><strong>Event Trigger Sensitivity</strong><br>
+        <strong>Issue</strong>: A low threshold triggered too many events, overwhelming the soundscape.<br>
+        <strong>Solution</strong>: Implemented a dynamic threshold based on recent event amplitude, reducing sensitivity.
+    </li>
+    <li><strong>Drone Dominance</strong><br>
+        <strong>Issue</strong>: The drone masked percussive events.<br>
+        <strong>Solution</strong>: Linked drone amplitude to event rate, ensuring balance.
+    </li>
+    <li><strong>Lack of Historical Influence</strong><br>
+        <strong>Issue</strong>: The soundscape lacked memory of past data.<br>
+        <strong>Solution</strong>: Added a moving average of historical data, enhancing temporal depth.
+    </li>
+    <li><strong>Distortion from Chaotic Peaks</strong><br>
+        <strong>Issue</strong>: Signal clipping occurred during event overlaps.<br>
+        <strong>Solution</strong>: Applied soft clipping to prevent distortion while preserving dynamics.
+    </li>
+</ol>
+<p>The final soundscape is dynamic and responsive, reflecting the dataset’s patterns and variability through layered synthesis, chaos, and event-driven design, with adjustments ensuring a balanced and engaging auditory experience.</p>
+`;
+
+            const reflectionInteractive = `
+<h3>a. Dataset Used</h3>
+<h4>Description</h4>
+<p>The primary "dataset" for this project consists of real-time keyboard input data captured by the Python script (<code>osc_keyboard_stream.py</code>) and processed by the SuperCollider script (<code>InteractiveSoundSystem.scd</code>). Specifically:</p>
+<ul>
+    <li><strong>Keyboard Inputs</strong>: The keys <code>a</code>, <code>s</code>, <code>d</code>, <code>f</code>, <code>g</code>, <code>h</code>, <code>j</code>, and <code>k</code> are mapped to OSC messages containing five parameters: pitch, filter cutoff, amplitude, pan, and density. These parameters are sent to SuperCollider via OSC messages on the <code>/soundData</code> path.</li>
+    <li><strong>Audio File</strong>: An audio buffer referenced in SuperCollider (<code>Platform.resourceDir +/+ "sounds/a11wlk01.wav"</code>) is used for granular synthesis. If the file is unavailable, a fallback empty buffer is allocated.</li>
+    <li><strong>Wavetable Data</strong>: A synthetic wavetable is generated using <code>Signal.sineFill(512, [1])</code> for the drone synthesis layer.</li>
+</ul>
+<h4>Source</h4>
+<ul>
+    <li><strong>Keyboard Data</strong>: Generated live by user interaction with the Python script using the <code>pynput</code> library.</li>
+    <li><strong>Audio File</strong>: Assumed to be a default SuperCollider sound file (<code>a11wlk01.wav</code>). Users must provide a valid WAV file if this is missing.</li>
+    <li><strong>Wavetable</strong>: Algorithmically generated within SuperCollider, requiring no external data.</li>
+</ul>
+<h4>Usage</h4>
+<ul>
+    <li>The keyboard inputs drive the sound parameters (e.g., pitch controls frequency, density affects granular grain frequency).</li>
+    <li>The audio file provides source material for the granular synthesis layer, creating a textured background.</li>
+    <li>The wavetable is used in the drone layer to produce a continuous, modulated sound.</li>
+</ul>
+<h4>Rationale</h4>
+<p>Using live keyboard input as the primary dataset allows for real-time interactivity, aligning with the goal of creating an engaging soundscape. The audio file and wavetable were chosen to add depth and variety to the sound design without requiring extensive external resources, making the system accessible and self-contained.</p>
+
+<h3>b. Design Choices and Rationale</h3>
+<h4>1. SuperCollider Architecture</h4>
+<ul>
+    <li><strong>Choice</strong>: A modular structure with three <code>SynthDef</code>s (<code>\\eventSound</code>, <code>\\drone</code>, <code>\\granularLayer</code>) and a separate <code>\\keyControl</code> for keyboard input handling.</li>
+    <li><strong>Rationale</strong>: 
+        <ul>
+            <li><strong>Modularity</strong>: Each <code>SynthDef</code> handles a distinct sonic layer (FM-based events, wavetable drone, granular texture), allowing independent control and easier debugging.</li>
+            <li><strong>Real-time Processing</strong>: SuperCollider’s server-client model supports low-latency audio synthesis, ideal for interactive applications.</li>
+            <li><strong>Keyboard Control</strong>: The <code>\\keyControl</code> <code>SynthDef</code> uses <code>KeyState.kr</code> to monitor keys on the server, sending data to a control bus for language-side processing, ensuring accurate and responsive input handling.</li>
+        </ul>
+    </li>
+</ul>
+<h4>2. Sound Design</h4>
+<ul>
+    <li><strong>Choice</strong>: 
+        <ul>
+            <li><code>\\eventSound</code>: FM synthesis with vibrato and HenonN chaotic modulation.</li>
+            <li><code>\\drone</code>: Wavetable synthesis with ring modulation and low-pass filtering.</li>
+            <li><code>\\granularLayer</code>: Granular synthesis with FreeVerb for spatial effects.</li>
+        </ul>
+    </li>
+    <li><strong>Rationale</strong>:
+        <ul>
+            <li><strong>FM with Vibrato</strong>: Provides sharp, percussive sounds with dynamic pitch variation, making key presses feel lively and distinct.</li>
+            <li><strong>Wavetable Drone</strong>: Creates a continuous, evolving background that complements the transient events, adding depth without overpowering.</li>
+            <li><strong>Granular Synthesis</strong>: Uses the audio file to produce textured, atmospheric sounds, enhanced by reverb for immersion.</li>
+            <li><strong>Chaotic Modulation</strong>: HenonN adds unpredictable variations, aligning with the goal of a dynamic, non-repetitive soundscape.</li>
+        </ul>
+    </li>
+</ul>
+<h4>3. Keyboard Input Handling</h4>
+<ul>
+    <li><strong>Choice</strong>: Map keys <code>a</code> to <code>k</code> to a range of frequencies (C3 to C6), with increased amplitude and pan variation, and display active keys in the Post window.</li>
+    <li><strong>Rationale</strong>:
+        <ul>
+            <li><strong>Key Mapping</strong>: The linear progression from <code>a</code> (low pitch, left pan) to <code>k</code> (high pitch, right pan) creates an intuitive musical interface.</li>
+            <li><strong>Amplified Response</strong>: Higher amplitudes (<code>amp * 1.5</code>) and a wider frequency range make key presses more noticeable, addressing user feedback about weak interactivity.</li>
+            <li><strong>Visual Feedback</strong>: Displaying active keys (e.g., "Active Keys: a s") aids debugging and user engagement by confirming input detection.</li>
+        </ul>
+    </li>
+</ul>
+<h4>4. Python OSC Integration</h4>
+<ul>
+    <li><strong>Choice</strong>: Use <code>pynput</code> for keyboard capture and <code>python-osc</code> to send OSC messages with five parameters to SuperCollider.</li>
+    <li><strong>Rationale</strong>:
+        <ul>
+            <li><strong>Cross-Platform</strong>: <code>pynput</code> works across operating systems, ensuring broad compatibility.</li>
+            <li><strong>Simple OSC Protocol</strong>: Sending a fixed set of parameters (pitch, filter, amplitude, pan, density) simplifies communication and aligns with SuperCollider’s <code>OSCdef</code>.</li>
+            <li><strong>Debug Output</strong>: Printing OSC messages in the terminal helps users verify that inputs are being sent correctly.</li>
+        </ul>
+    </li>
+</ul>
+<h4>5. Error Handling and Stability</h4>
+<ul>
+    <li><strong>Choice</strong>: Include server reboot, buffer validation, and try-catch blocks in SuperCollider, plus debug logs in both scripts.</li>
+    <li><strong>Rationale</strong>:
+        <ul>
+            <li><strong>Robustness</strong>: Conditional server booting (<code>if (!s.serverRunning)</code>) and buffer checks prevent crashes if resources are unavailable.</li>
+            <li><strong>Debugging</strong>: Logs (e.g., "Buffers loaded", "Active Keys") help diagnose issues like missing files or silent outputs.</li>
+            <li><strong>User Guidance</strong>: The Python script’s startup message clarifies which keys to press and how to exit, reducing user error.</li>
+        </ul>
+    </li>
+</ul>
+
+<h3>c. Unexpected Results and How They Influenced the Outcome</h3>
+<h4>1. Unexpected Result: Syntax Errors in SuperCollider</h4>
+<ul>
+    <li><strong>Issue</strong>: Early iterations encountered errors like <code>unexpected VAR, expecting '}'</code> and <code>unexpected '.', expecting end of file</code>.</li>
+    <li><strong>Cause</strong>: 
+        <ul>
+            <li>The <code>var bufferPath</code> was misplaced mid-<code>Routine</code>, violating SuperCollider’s scoping rules.</li>
+            <li>A missing <code>s</code> before <code>.waitForBoot</code> caused the interpreter to misparse the method call.</li>
+        </ul>
+    </li>
+    <li><strong>Influence</strong>:
+        <ul>
+            <li><strong>Code Restructure</strong>: Moved all variable declarations to the start of blocks and ensured proper method calls (e.g., <code>s.waitForBoot</code>).</li>
+            <li><strong>Validation</strong>: Added checks to confirm script execution, such as logging server status and buffer loading.</li>
+            <li><strong>Outcome</strong>: The final script is more robust, with clear error handling and proper syntax, reducing the likelihood of runtime failures.</li>
+        </ul>
+    </li>
+</ul>
+<h4>2. Unexpected Result: Weak Keyboard Interactivity</h4>
+<ul>
+    <li><strong>Issue</strong>: Users reported that pressing keys (<code>a</code> to <code>k</code>) didn’t produce noticeable sound changes, making the system feel unresponsive.</li>
+    <li><strong>Cause</strong>: The initial frequency range (C4 to B4) was too narrow, and amplitudes were too low (e.g., <code>amp = 0.4</code>).</li>
+    <li><strong>Influence</strong>:
+        <ul>
+            <li><strong>Enhanced Sound Design</strong>: Expanded the frequency range to C3–C6, increased amplitude scaling (<code>amp * 1.5</code>), and added vibrato to <code>\\eventSound</code> for livelier responses.</li>
+            <li><strong>Visual Feedback</strong>: Added Post window output to display active keys (e.g., "Active Keys: a d"), helping users confirm input detection.</li>
+            <li><strong>Outcome</strong>: The system became more engaging, with distinct auditory and visual feedback for each key press, directly addressing user feedback.</li>
+        </ul>
+    </li>
+</ul>
+<h4>3. Unexpected Result: Python Script Not Working</h4>
+<ul>
+    <li><strong>Issue</strong>: The Python script (<code>osc_keyboard_stream.py</code>) failed to trigger sounds in SuperCollider, likely due to OSC communication issues or undetected key presses.</li>
+    <li><strong>Cause</strong>: Potential issues included incorrect OSC port, unfocused terminal window, or mismatched key mappings.</li>
+    <li><strong>Influence</strong>:
+        <ul>
+            <li><strong>Reworked Python Script</strong>: Simplified the script to use <code>pynput</code> for reliable key capture, added debug prints for OSC messages, and included user instructions to focus the terminal.</li>
+            <li><strong>OSC Verification</strong>: Ensured the OSC port (57120) matched SuperCollider’s <code>OSCdef</code> and added terminal feedback to confirm message sending.</li>
+            <li><strong>Outcome</strong>: The updated Python script is more user-friendly and reliable, with clear diagnostics to troubleshoot communication issues.</li>
+        </ul>
+    </li>
+</ul>
+<h4>4. Unexpected Result: No Sound Output</h4>
+<ul>
+    <li><strong>Issue</strong>: Despite running the scripts, no sound was produced, even after fixing syntax errors.</li>
+    <li><strong>Cause</strong>: Likely due to server not booting, incorrect audio device, or silent synths (e.g., low amplitude or uninitialized buffers).</li>
+    <li><strong>Influence</strong>:
+        <ul>
+            <li><strong>Debugging Steps</strong>: Added checks for server status (<code>s.serverRunning</code>), buffer validity (<code>~buffer.notNil</code>), and synth initialization logs.</li>
+            <li><strong>Fallback Mechanisms</strong>: Implemented a fallback buffer if the audio file is missing and increased default amplitudes for audibility.</li>
+            <li><strong>Outcome</strong>: The system now includes robust checks to ensure sound output, with clear Post window messages to guide users if issues persist.</li>
+        </ul>
+    </li>
+</ul>
+<h4>Conclusion</h4>
+<p>The development process revealed critical insights into SuperCollider’s syntax requirements, the importance of clear user feedback, and the challenges of cross-script communication. Unexpected issues like syntax errors and weak interactivity prompted significant improvements, resulting in a more robust, engaging, and user-friendly sound system. The final implementation successfully delivers a dynamic soundscape driven by keyboard inputs, with clear visual feedback and reliable operation across both SuperCollider and Python components.</p>
+`;
+
+            return (
+                <div>
+                    <Header />
+                    <main className="container mx-auto px-4 py-8">
+                        <ReflectionSection title="Reflection: Health and Fitness Soundscape" content={reflectionHealth} />
+                        <ReflectionSection title="Reflection: Interactive Sound System" content={reflectionInteractive} />
+                    </main>
+                    <footer className="bg-gray-900 text-white py-4">
+                        <div className="container mx-auto px-4 text-center">
+                            <p>© 2025 Interactive Sound Systems. All rights reserved.</p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
